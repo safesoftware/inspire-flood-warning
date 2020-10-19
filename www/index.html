@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html>
+<script src="libs/jquery-1.10.1.js"></script>
+<!-- Bootstrap -->
+<!-- <script src="libs/bootstrap/js/bootstrap.js"></script> -->
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+
+<!-- <link href="libs/bootstrap/css/bootstrap.css" rel="stylesheet" media="screen"> -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link href="libs/bootstrap/css/bootstrap-responsive.css" rel="stylesheet"> -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="leaflet/leaflet.css" />
+<script src="leaflet/leaflet.js"></script> 
+<link rel="stylesheet" type="text/css" href="css/reset.css">
+<link rel="stylesheet" type="text/css" href="css/ie.css">
+<link rel="stylesheet" type="text/css" href="css/index.css">
+
+<head>
+	<title>INSPIRE Flood Warning Assistant.</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+	<div class="container-fluid" id="mainwrapper">
+	    <div class="row-fluid" id="maprow">
+	        <div class="span4" id="request_form">
+				
+				<h1>Step 1: Choose Report Type</h1>
+				<!-- Report Type (form control) -->	
+				<div class="form-check form-check-inline text-center">
+					<input class="form-check-input" type="radio" name="floodImpactResults" id="floodRadio" >
+					<label class="form-check-label" for="FloodRadio">
+					  Flood 
+					</label>
+				  </div>
+				  <div class="form-check form-check-inline text-center">
+					<input class="form-check-input" type="radio" name="floodImpactResults" id="impactRadio">
+					<label class="form-check-label" for="ImpactRadio">
+					  Impact 
+					</label>
+				</div>
+
+				<h1>Step 2: Select Area of Interest</h1>
+				<p>Set a buffer distance for your point. Pan and zoom to your area of interest. Click on the map to select the center point of the area. <br></p>
+				
+				<!-- Buffer Distance-->		
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+					<span class="input-group-text">Buffer Distance</span>
+					</div>
+					<input type="text" class="form-control" id="Buffer" value="20">
+					<div class="input-group-append">
+					<span class="input-group-text">km</span>
+					</div>
+				</div>
+
+				<h1>Step 3: Report Parameters</h1>
+				<div id="parameters">
+				
+				<!-- Year Selection -->
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" for="PeriodSelection">Period</span>
+					</div>
+					<select class="custom-select" id="PeriodSelection">
+						<option value="2019 or older"  id="2019 or older">2019 or older</option>
+						<option value="2020"  id="2020">2020</option>
+						<option value="Current"  id="Current">Current</option>								
+					</select>
+				</div> 
+
+				<!-- Warning Selection -->
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" for="WarningSelection">Warning Type</span>
+					</div>
+					<select class="custom-select" id="WarningSelection">
+						<option value="Expired"  id="Expired">Expired</option>
+						<option value="Alert"  id="Alert">Alert</option>
+						<option value="Warning"  id="Warning">Warning</option>
+						<option value="Severe"  id="Severe">Severe</option>														
+					</select>
+				</div> 
+
+				<!-- Select Impact Type -->
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" for="ImpactType">Impact Type</span>
+					</div>
+					<select class="custom-select" id="ImpactType">
+						<option value="None" id="None" selected>None</option>
+						<option value="Roads"  id="Roads">Roads</option>
+						<option value="Junctions"  id="Junctions">Junctions</option>
+						<option value="Infrastructure"  id="Infrastructure">Infrastructure</option>							
+					</select>
+				</div> 
+				
+	  			<!-- Run Selection -->
+				<h1>Step 4: View Report</h1>
+
+				<div id="submission" class="container-fluid justify-content-center">
+					<div class="col text-center">
+						<button id="submit" class="btn btn-primary btn-sm" onclick="submit()">Request Data</button>
+					</div>
+				</div>
+
+				<h1></h1>
+				<div id="data_attribution">
+				<p>UK flood data provided by: <a href="https://www.gov.uk/government/organisations/environment-agency">UK Environment Agency.</a><br>
+					Finnish flood data provided by: <a href="https://www.maanmittauslaitos.fi/en/maps-and-spatial-data">National Land Survey of Finland.</a></p>
+				</div>
+
+				</div>
+	        </div>
+
+	        <div class="span8" id="map_canvas"></div>
+	    </div>
+	</div>
+
+
+	<script>
+
+		$('#impactRadio').click(function() {$("#ImpactType").val("Roads");});
+		$("#impactRadio").click(function() {$("#None").prop("disabled", true);});
+		$("#impactRadio").click(function() {$("#Roads").prop("disabled", false);});
+		$("#impactRadio").click(function() {$("#Junctions").prop("disabled", false);});
+		$("#impactRadio").click(function() {$("#Infrastructure").prop("disabled", false);});
+
+		$('#floodRadio').click(function() {$("#ImpactType").val("None");});
+		$("#floodRadio").click(function() {$("#Roads").prop("disabled", true);});
+		$("#floodRadio").click(function() {$("#Junctions").prop("disabled", true);});
+		$("#floodRadio").click(function() {$("#Infrastructure").prop("disabled", true);});
+		$("#floodRadio").click(function() {$("#None").prop("disabled", false);});
+
+		var map = L.map('map_canvas', { zoomControl: false }).setView([52.0, -1.0], 8);
+		var layer,circle;
+
+		var baselayer = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 10,	
+		}).addTo(map);
+
+		new L.Control.Zoom({position: 'bottomright'}).addTo(map);
+
+		map.on('click', onMapClick);
+
+
+		//function onMapClick(e) {
+		//	if (layer){
+		//		layer.removeFrom(map);
+		//	}
+		//	layer = L.marker(e.latlng);
+		//	layer.addTo(map);
+		//}
+		
+		function onMapClick(e) {
+            if (layer){
+                layer.removeFrom(map);
+            }
+            if (circle){
+                circle.removeFrom(map);
+            }
+            layer = L.marker(e.latlng);
+            //add pin where user clicked
+            layer.addTo(map);
+            var radius = document.getElementById("Buffer").value * 1000.0;
+            //probably need to do a calculation here to make sure the buffer units match the radius units on the map
+            //create and add circle showing area that will be selected
+			circle = L.circle([e.latlng.lat, e.latlng.lng], {color:'red', fillColor: '#f03', fillOpacity:0.3, radius:radius});
+            circle.addTo(map);
+			}		
+		
+		function submitJob() {
+			var serverHost = 'https://demos-safe-software.fmecloud.com';
+			var repository = 'dataChallenge';
+			var workspace = 'floodMaps2html_updated.fmw';
+			
+			var period = '';
+			if (document.getElementById("PeriodSelection").value === "2019 or older") {
+				period = "2019 or older"
+			}
+			else if (document.getElementById("PeriodSelection").value === "2020") {
+				period = "2020"
+			}
+			else
+			{
+				period = "Current"
+			}
+			console.log(period);
+
+			// Warning type selection
+		
+			var warningType = '';
+			if (document.getElementById("WarningSelection").value === "Expired") {
+				warningType = "4"
+			}
+			else if (document.getElementById("WarningSelection").value === "Alert") {
+				warningType = "3"
+			}
+			else if (document.getElementById("WarningSelection").value === "Severe") {
+				warningType = "1"
+			}
+			else
+			{
+				warningType = "2"
+			}
+
+			console.log(warningType);
+			
+
+			// make them all like this?
+			var impactType = '';
+			var impactType = document.getElementById('ImpactType').value;
+
+			console.log(impactType);
+
+			var coords = layer.getLatLng();
+			var buffer = document.getElementById('Buffer').value;
+
+			//add message
+			var message = '<div class="alert alert-success"> Your request has been submitted. <br/> Please wait as your request will take a few minutes for FME Server to retrieve and compile your results.</div>';
+
+			var elem = document.getElementById('submission');
+			elem.innerHTML = message;
+
+    		window.open(serverHost+"/fmedatastreaming/"+repository+"/"+workspace+"?LONGITUDE="+coords.lng+"&LATITUDE="+coords.lat+"&BUFFER="+buffer+"&PERIOD="+period+"&WARNINGTYPE="+warningType+"&IMPACTTYPE="+impactType+"&token=f50c6f5e0bebfd852334b6268655619623174103", "_self");
+		}
+
+		function submit() {
+			//make sure a point was selected before attempting to run the job	
+			if (layer) {
+				submitJob();
+			}
+			else {
+				var error = document.createElement('div');
+				error.innerHTML = '<div class="alert alert-error"> Please select a location by clicking on the map. <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+
+				var myDiv = document.getElementById("submission");
+				myDiv.insertBefore(error, myDiv.firstChild);
+			}
+		}
+
+	</script>
+</body>
+</html>
